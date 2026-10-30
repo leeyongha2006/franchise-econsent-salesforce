@@ -9,7 +9,7 @@
 | 형태 | 회사 프로젝트 (고객사 구축) |
 | 기술 | Apex, LWC, Experience Cloud(파트너 포털), SOQL 집계, 엑셀 내보내기 |
 
-> 회사 프로젝트를 정리한 문서입니다. 고객사 이름, 가맹점 정보, 실데이터, 소스 코드는 포함하지 않습니다.
+> 회사 프로젝트를 정리한 문서입니다. 고객사 이름, 가맹점 정보, 실데이터, 회사 소스 코드는 포함하지 않습니다.
 
 ## 흐름
 
@@ -34,6 +34,29 @@ flowchart LR
 - **필터**: 지역, 담당 팀으로 좁혀 보기
 - **미입력 판별**: 지금 게시 중인 동의서를 기준으로 아직 동의하지 않은 가맹점을 골라냄
 - **엑셀 내보내기**: 화면 조건 그대로 전체 목록을 내려받기
+
+## 예제 코드
+
+전자동의 발행과 현황 집계 방식을 **독립적으로 다시 구현한 예제**입니다. 회사 코드가 아니며, 커스텀 오브젝트 없이 Wrapper 클래스로 동작을 확인할 수 있습니다.
+
+| 파일 | 역할 |
+|---|---|
+| [`ConsentPublisher.cls`](force-app/main/default/classes/ConsentPublisher.cls) | 동의서 공지 게시 시 영업 중인 가맹점마다 동의 대상 생성. (공지, 가맹점) 조합으로 중복 발행 방지, 공지 단위로 이력 분리 |
+| [`ConsentStatusService.cls`](force-app/main/default/classes/ConsentStatusService.cls) | 가맹점 기준 · 가맹점주 기준 동의율 집계, 지역 · 팀 · 미동의 필터, 페이지 나눔 |
+| `*_Test.cls` | 테스트 8개 — 두 기준 동의율 차이, 재발행, 새 공지, 1,000개 매장, 페이지 범위 |
+
+```apex
+// 점주 A 가 매장 3개 중 2개만 동의, 점주 B 는 1개 모두 동의
+// → 가맹점 기준 75.0%, 가맹점주 기준 50.0%
+ConsentStatusService.Summary summary = ConsentStatusService.summarize(rows);
+```
+
+### 직접 실행
+
+```bash
+sf org create scratch -f config/project-scratch-def.json -a consent-demo
+sf project deploy start -o consent-demo -d force-app --test-level RunLocalTests
+```
 
 ## 배운 점
 
